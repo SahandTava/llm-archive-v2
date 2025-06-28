@@ -8,6 +8,7 @@ mod config;
 mod db;
 mod errors;
 mod import;
+mod metrics;
 mod models;
 mod search;
 mod server;

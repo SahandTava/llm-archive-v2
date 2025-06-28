@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}LLM Archive - Home{% endblock %}
+
+{% block content %}
+<header>
+    <h1>LLM Archive V2</h1>
+    <p>Fast, focused search for your AI conversations</p>
+</header>
+
+<form action="/search" method="get">
+    <input type="text" 
+           name="q" 
+           class="search-box" 
+           placeholder="Search conversations..." 
+           autofocus
+           autocomplete="off">
+</form>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.total_conversations }}</div>
+        <div class="stat-label">Total Conversations</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.total_messages }}</div>
+        <div class="stat-label">Total Messages</div>
+    </div>
+    {% for provider in stats.providers %}
+    <div class="stat-card">
+        <div class="stat-value">{{ provider.count }}</div>
+        <div class="stat-label">{{ provider.name|title }}</div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="keyboard-shortcuts">
+    <h3>Keyboard Shortcuts</h3>
+    <ul>
+        <li><kbd>/</kbd> - Focus search box</li>
+        <li><kbd>↓</kbd> <kbd>↑</kbd> - Navigate search results</li>
+        <li><kbd>Enter</kbd> - Open selected conversation</li>
+        <li><kbd>Esc</kbd> - Clear search / Go back</li>
+    </ul>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Auto-focus search box on page load
+    window.addEventListener('load', () => {
+        document.querySelector('.search-box').focus();
+    });
+</script>
+{% endblock %}

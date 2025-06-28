@@ -55,10 +55,24 @@ pub async fn import_conversations(
                 "Import completed: {} conversations, {} messages in {}ms",
                 stats.conversations, stats.messages, stats.duration_ms
             );
+            crate::metrics::track_import(
+                provider,
+                stats.conversations,
+                stats.messages,
+                std::time::Duration::from_millis(stats.duration_ms),
+                true,
+            );
             Ok(stats.conversations)
         }
         Err(e) => {
             error!("Import failed: {}", e);
+            crate::metrics::track_import(
+                provider,
+                stats.conversations,
+                stats.messages,
+                std::time::Duration::from_millis(stats.duration_ms),
+                false,
+            );
             Err(e)
         }
     }

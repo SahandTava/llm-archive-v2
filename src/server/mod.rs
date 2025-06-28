@@ -2,6 +2,7 @@ use anyhow::Result;
 use axum::{
     extract::{Path as AxumPath, Query, State},
     http::StatusCode,
+    middleware,
     response::{Html, IntoResponse, Json},
     routing::{get, post},
     Router,
@@ -10,6 +11,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::Instant;
 use tower_http::services::ServeDir;
 use tracing::info;
 
@@ -32,9 +34,18 @@ struct AppState {
 
 /// Run the web server
 pub async fn run(port: u16, database: PathBuf, config: Config) -> Result<()> {
+    // Initialize metrics
+    crate::metrics::init_metrics()?;
+    
     // Create database pool
     let pool = crate::db::create_pool(&database).await?;
     crate::db::run_migrations(&pool).await?;
+    
+    // Start background stats updater
+    let stats_pool = pool.clone();
+    tokio::spawn(async move {
+        crate::metrics::update_stats_task(stats_pool).await;
+    });
     
     let state = Arc::new(AppState { pool, config });
     
@@ -60,6 +71,9 @@ pub async fn run(port: u16, database: PathBuf, config: Config) -> Result<()> {
         
         // Metrics endpoint
         .route("/metrics", get(metrics_endpoint))
+        
+        // Add metrics middleware
+        .layer(middleware::from_fn(crate::metrics::middleware::track_metrics))
         
         .with_state(state);
     
@@ -128,6 +142,7 @@ async fn search_api(
 ) -> AppResult<Json<Vec<SearchResult>>> {
     let query = params.q.ok_or_else(|| AppError::BadRequest("Missing query parameter".into()))?;
     
+    let start = Instant::now();
     let results = search::search_with_snippets(
         &state.pool,
         &query,
@@ -135,6 +150,9 @@ async fn search_api(
         state.config.search.snippet_length,
     )
     .await?;
+    
+    let duration = start.elapsed();
+    crate::metrics::track_search(params.provider.as_deref(), results.len(), duration);
     
     Ok(Json(results))
 }
@@ -202,10 +220,17 @@ async fn health_check() -> impl IntoResponse {
     StatusCode::OK
 }
 
-/// Metrics endpoint (placeholder for now)
+/// Metrics endpoint
 async fn metrics_endpoint() -> impl IntoResponse {
-    // TODO: Implement proper metrics with prometheus format
-    "# HELP llm_archive_up Is the service up\n# TYPE llm_archive_up gauge\nllm_archive_up 1\n"
+    let encoder = metrics_exporter_prometheus::Encoder::new();
+    let metric_families = encoder.encode();
+    let mut buffer = String::new();
+    
+    if let Err(e) = encoder.encode_fmt(&metric_families, &mut buffer) {
+        return (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to encode metrics: {}", e));
+    }
+    
+    (StatusCode::OK, buffer)
 }
 
 /// Helper functions
