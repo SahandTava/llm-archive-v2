@@ -24,10 +24,10 @@ pub async fn import_with_python(
         let sys = py.import("sys")?;
         let path_list: &PyList = sys.getattr("path")?.downcast()?;
         
-        let v1_parsers_path = "/home/bijan/LLMArchGH/biji20LLMArchiv/parsers";
-        path_list.append(v1_parsers_path)?;
+        let parsers_path = "/home/bijan/LLMArchGH/llm-archive-v2/parsers";
+        path_list.append(parsers_path)?;
         
-        debug!("Added V1 parsers to Python path: {}", v1_parsers_path);
+        debug!("Added parsers to Python path: {}", parsers_path);
         
         // Import the appropriate parser module
         let parser_module = match provider_type {
@@ -258,10 +258,10 @@ pub fn test_python_bridge() -> Result<()> {
         let version = py.version();
         info!("Python bridge initialized: Python {}", version);
         
-        // Try to import V1 parsers
+        // Try to import parsers
         let sys = py.import("sys")?;
         let path_list: &PyList = sys.getattr("path")?.downcast()?;
-        path_list.append("/home/bijan/LLMArchGH/biji20LLMArchiv/parsers")?;
+        path_list.append("/home/bijan/LLMArchGH/llm-archive-v2/parsers")?;
         
         // Test importing each parser
         for parser in ["chatgpt_parser", "claude_parser", "gemini_parser", "xai_parser", "zed_parser"] {

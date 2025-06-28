@@ -3,6 +3,9 @@
 
 pub mod chatgpt;
 pub mod claude;
+pub mod gemini;
+pub mod xai;
+pub mod zed;
 
 // Common parsing utilities
 use serde_json::Value;

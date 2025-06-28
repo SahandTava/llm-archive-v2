@@ -37,7 +37,10 @@ pub async fn import_conversations(
         match provider_type {
             ProviderType::ChatGPT => parsers::chatgpt::import(pool, path, &mut stats).await,
             ProviderType::Claude => parsers::claude::import(pool, path, &mut stats).await,
-            _ => Err(anyhow::anyhow!("Native parser not yet implemented for {}", provider)),
+            ProviderType::Gemini => parsers::gemini::import(pool, path, &mut stats).await,
+            ProviderType::XAI => parsers::xai::import(pool, path, &mut stats).await,
+            ProviderType::Zed => parsers::zed::import(pool, path, &mut stats).await,
+            _ => Err(anyhow::anyhow!("Native parser not implemented for {}", provider)),
         }
     };
     
