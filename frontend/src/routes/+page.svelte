@@ -1,220 +1,217 @@
-<script>
-  import { onMount } from 'svelte';
-  
-  let searchQuery = '';
-  let results = [];
-  let searching = false;
-  let searchTimer;
-  let selectedIndex = -1;
-  
-  // Debounced search function
-  function handleSearch() {
-    clearTimeout(searchTimer);
-    if (!searchQuery.trim()) {
-      results = [];
-      return;
-    }
-    
-    searching = true;
-    searchTimer = setTimeout(async () => {
-      try {
-        const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
-        if (response.ok) {
-          const data = await response.json();
-          results = data.results || [];
-          selectedIndex = -1;
-        }
-      } catch (error) {
-        console.error('Search error:', error);
-      } finally {
-        searching = false;
-      }
-    }, 100); // 100ms debounce for fast typing
-  }
-  
-  // Keyboard navigation
-  function handleKeydown(e) {
-    if (e.key === 'ArrowDown' || e.key === 'j') {
-      e.preventDefault();
-      selectedIndex = Math.min(selectedIndex + 1, results.length - 1);
-    } else if (e.key === 'ArrowUp' || e.key === 'k') {
-      e.preventDefault();
-      selectedIndex = Math.max(selectedIndex - 1, -1);
-    } else if (e.key === 'Enter' && selectedIndex >= 0) {
-      window.location.href = `/conversations/${results[selectedIndex].conversation_id}`;
-    }
-  }
-  
-  // Highlight search terms in text
-  function highlightTerms(text, query) {
-    if (!query) return text;
-    const terms = query.split(/\s+/).filter(Boolean);
-    let highlighted = text;
-    terms.forEach(term => {
-      const regex = new RegExp(`(${term})`, 'gi');
-      highlighted = highlighted.replace(regex, '<mark>$1</mark>');
+<script lang="ts">
+    import { onMount } from 'svelte';
+    import { searchQuery, searchResults, isSearching, selectedIndex, navigateUp, navigateDown } from '$lib/stores/search';
+    import { goto } from '$app/navigation';
+    import { setupKeyboardShortcuts } from '$lib/utils';
+
+    let searchInput: HTMLInputElement;
+
+    onMount(() => {
+        setupKeyboardShortcuts();
+        searchInput?.focus();
     });
-    return highlighted;
-  }
-  
-  onMount(() => {
-    // Auto-focus search on mount
-    const searchInput = document.querySelector('#global-search');
-    if (searchInput) searchInput.focus();
-  });
+
+    function handleKeydown(e: KeyboardEvent) {
+        switch(e.key) {
+            case 'ArrowDown':
+            case 'j':
+                e.preventDefault();
+                navigateDown();
+                break;
+            case 'ArrowUp':
+            case 'k':
+                e.preventDefault();
+                navigateUp();
+                break;
+            case 'Enter':
+                e.preventDefault();
+                const results = $searchResults;
+                if (results[$selectedIndex]) {
+                    goto(`/conversations/${results[$selectedIndex].conversation_id}`);
+                }
+                break;
+        }
+    }
+
+    // Real-time search preview
+    $: searchPreview = $searchQuery.length > 0 && $searchQuery.length < 3 
+        ? 'Type at least 3 characters to search...' 
+        : '';
 </script>
 
-<div class="search-bar">
-  <div class="container">
-    <input
-      id="global-search"
-      type="search"
-      class="search-input"
-      placeholder="Search your conversations..."
-      bind:value={searchQuery}
-      on:input={handleSearch}
-      on:keydown={handleKeydown}
-      autocomplete="off"
-      spellcheck="false"
-    />
-  </div>
-</div>
+<svelte:window on:keydown={handleKeydown} />
 
-<div class="container">
-  {#if searching}
-    <div class="loading">Searching...</div>
-  {:else if results.length > 0}
-    <div class="results-count">{results.length} results</div>
-    <div class="search-results">
-      {#each results as result, index}
-        <a 
-          href="/conversations/{result.conversation_id}"
-          class="result-item"
-          class:selected={index === selectedIndex}
-        >
-          <div class="result-title">{result.title || 'Untitled Conversation'}</div>
-          <div class="result-snippet">
-            {@html highlightTerms(result.snippet, searchQuery)}
-          </div>
-          <div class="result-meta">
-            {result.provider} • {new Date(result.created_at).toLocaleDateString()}
-          </div>
-        </a>
-      {/each}
+<div class="search-container">
+    <h1>LLM Archive Search</h1>
+    
+    <div class="search-box">
+        <input
+            bind:this={searchInput}
+            bind:value={$searchQuery}
+            type="search"
+            id="search-input"
+            placeholder="Search conversations... (try 'provider:chatgpt' or 'after:2024-01-01')"
+            autocomplete="off"
+            spellcheck="false"
+        />
+        
+        {#if $isSearching}
+            <div class="search-indicator">Searching...</div>
+        {/if}
+        
+        {#if searchPreview}
+            <div class="search-preview">{searchPreview}</div>
+        {/if}
     </div>
-  {:else if searchQuery}
-    <div class="no-results">No results found for "{searchQuery}"</div>
-  {:else}
-    <div class="welcome">
-      <h1>LLM Archive Search</h1>
-      <p>Start typing to search through your AI conversations</p>
-      <div class="shortcuts">
-        <h3>Keyboard Shortcuts</h3>
-        <ul>
-          <li><kbd>/</kbd> Focus search</li>
-          <li><kbd>↓</kbd> or <kbd>j</kbd> Next result</li>
-          <li><kbd>↑</kbd> or <kbd>k</kbd> Previous result</li>
-          <li><kbd>Enter</kbd> Open selected result</li>
-        </ul>
-      </div>
+
+    <div class="search-tips">
+        <details>
+            <summary>Advanced Search</summary>
+            <ul>
+                <li><code>provider:chatgpt</code> - Filter by provider</li>
+                <li><code>role:user</code> - Show only user messages</li>
+                <li><code>after:2024-01-01</code> - Messages after date</li>
+                <li><code>before:2024-12-31</code> - Messages before date</li>
+                <li>Combine filters: <code>rust provider:claude role:assistant</code></li>
+            </ul>
+        </details>
     </div>
-  {/if}
+
+    {#if $searchResults.length > 0}
+        <div class="search-results" role="listbox">
+            {#each $searchResults as result, i}
+                <a 
+                    href="/conversations/{result.conversation_id}"
+                    class="search-result"
+                    class:selected={i === $selectedIndex}
+                    role="option"
+                    aria-selected={i === $selectedIndex}
+                >
+                    <h3>{result.title}</h3>
+                    <p class="snippet">{@html result.snippet}</p>
+                    <div class="meta">
+                        Score: {result.score.toFixed(2)}
+                    </div>
+                </a>
+            {/each}
+        </div>
+    {/if}
 </div>
 
 <style>
-  .results-count {
-    margin: 16px 0 8px;
-    color: var(--gray-600);
-    font-size: 13px;
-  }
-  
-  .search-results {
-    margin-top: 16px;
-  }
-  
-  .result-item {
-    display: block;
-    padding: 16px;
-    border: 1px solid var(--gray-200);
-    border-radius: 4px;
-    margin-bottom: 8px;
-    color: inherit;
-    text-decoration: none;
-  }
-  
-  .result-item:hover,
-  .result-item.selected {
-    background: var(--gray-50);
-    border-color: var(--gray-300);
-  }
-  
-  .result-item.selected {
-    outline: 2px solid var(--primary);
-    outline-offset: -2px;
-  }
-  
-  .result-title {
-    font-weight: 600;
-    margin-bottom: 4px;
-  }
-  
-  .result-snippet {
-    color: var(--gray-700);
-    margin-bottom: 8px;
-    line-height: 1.6;
-  }
-  
-  .result-snippet :global(mark) {
-    background: #fef3c7;
-    padding: 1px 2px;
-    border-radius: 2px;
-  }
-  
-  .result-meta {
-    font-size: 12px;
-    color: var(--gray-500);
-  }
-  
-  .no-results {
-    text-align: center;
-    padding: 48px;
-    color: var(--gray-600);
-  }
-  
-  .welcome {
-    padding: 48px 0;
-  }
-  
-  .welcome p {
-    color: var(--gray-600);
-    margin-bottom: 32px;
-  }
-  
-  .shortcuts {
-    background: var(--gray-50);
-    padding: 20px;
-    border-radius: 4px;
-    max-width: 400px;
-  }
-  
-  .shortcuts ul {
-    list-style: none;
-  }
-  
-  .shortcuts li {
-    margin: 8px 0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  
-  kbd {
-    background: white;
-    border: 1px solid var(--gray-300);
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-family: monospace;
-    font-size: 12px;
-    box-shadow: 0 1px 0 var(--gray-200);
-  }
+    .search-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    h1 {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .search-box {
+        position: relative;
+        margin-bottom: 1rem;
+    }
+
+    input[type="search"] {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1.2rem;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        transition: border-color 0.2s;
+    }
+
+    input[type="search"]:focus {
+        outline: none;
+        border-color: #007bff;
+    }
+
+    .search-indicator {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .search-preview {
+        margin-top: 0.5rem;
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .search-tips {
+        margin-bottom: 2rem;
+    }
+
+    .search-tips details {
+        background: #f5f5f5;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+    }
+
+    .search-tips summary {
+        cursor: pointer;
+        font-weight: 500;
+    }
+
+    .search-tips ul {
+        margin-top: 0.5rem;
+        padding-left: 1.5rem;
+    }
+
+    .search-tips code {
+        background: #e0e0e0;
+        padding: 0.2rem 0.4rem;
+        border-radius: 3px;
+        font-size: 0.9rem;
+    }
+
+    .search-results {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .search-result {
+        display: block;
+        padding: 1rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.2s;
+    }
+
+    .search-result:hover,
+    .search-result.selected {
+        border-color: #007bff;
+        background: #f0f7ff;
+    }
+
+    .search-result h3 {
+        margin: 0 0 0.5rem 0;
+        color: #333;
+    }
+
+    .search-result .snippet {
+        margin: 0 0 0.5rem 0;
+        color: #666;
+        line-height: 1.5;
+    }
+
+    .search-result .snippet :global(mark) {
+        background: #ffeb3b;
+        padding: 0.1rem;
+        border-radius: 2px;
+    }
+
+    .search-result .meta {
+        font-size: 0.8rem;
+        color: #999;
+    }
 </style>
