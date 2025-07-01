@@ -1,0 +1,21 @@
+[
+  {
+    "title": "Test ChatGPT Export",
+    "create_time": 1672531200.0,
+    "messages": [
+      {
+        "role": "user",
+        "content": "This is a test message",
+        "create_time": 1672531200.0
+      },
+      {
+        "role": "assistant",
+        "content": "This is a test response",
+        "create_time": 1672531250.0,
+        "metadata": {
+          "model_slug": "gpt-4"
+        }
+      }
+    ]
+  }
+]

@@ -1,0 +1,75 @@
+[
+  {
+    "conversation_id": "conv-gemini-123",
+    "conversation": {
+      "conversation_id": "conv-gemini-123",
+      "create_time": "2023-07-01T09:00:00.000Z",
+      "update_time": "2023-07-01T09:30:00.000Z"
+    },
+    "turns": [
+      {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Can you help me understand quantum computing basics?"
+          }
+        ],
+        "create_time": "2023-07-01T09:00:00.000Z"
+      },
+      {
+        "role": "model",
+        "parts": [
+          {
+            "text": "I'd be happy to explain quantum computing basics!\n\nQuantum computing uses quantum mechanical phenomena to process information:\n\n**Key Concepts:**\n1. **Qubits**: Unlike classical bits (0 or 1), qubits can be in superposition of both states\n2. **Superposition**: A qubit can be in multiple states simultaneously\n3. **Entanglement**: Qubits can be correlated in ways classical bits cannot\n4. **Quantum Gates**: Operations that manipulate qubits\n\n**Advantages:**\n- Exponential speedup for certain problems\n- Better simulation of quantum systems\n- Enhanced cryptography capabilities"
+          }
+        ],
+        "create_time": "2023-07-01T09:00:45.000Z"
+      },
+      {
+        "role": "user",
+        "parts": [
+          {
+            "text": "What problems are quantum computers good at solving?"
+          }
+        ],
+        "create_time": "2023-07-01T09:05:00.000Z"
+      },
+      {
+        "role": "model",
+        "parts": [
+          {
+            "text": "Quantum computers excel at specific types of problems:\n\n1. **Cryptography**: Shor's algorithm can factor large numbers exponentially faster\n2. **Optimization**: Solving complex optimization problems\n3. **Simulation**: Modeling quantum systems like molecules\n4. **Machine Learning**: Quantum ML algorithms\n5. **Search**: Grover's algorithm for unsorted databases"
+          }
+        ],
+        "create_time": "2023-07-01T09:05:30.000Z"
+      }
+    ]
+  },
+  {
+    "conversation_id": "conv-gemini-456",
+    "conversation": {
+      "create_time": "2023-07-02T14:00:00.000Z",
+      "update_time": "2023-07-02T14:15:00.000Z"
+    },
+    "turns": [
+      {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Explain the difference between REST and GraphQL"
+          }
+        ],
+        "create_time": "2023-07-02T14:00:00.000Z"
+      },
+      {
+        "role": "model",
+        "parts": [
+          {
+            "text": "REST and GraphQL are different approaches to API design:\n\n**REST (Representational State Transfer):**\n- Multiple endpoints for different resources\n- Fixed data structure per endpoint\n- Over/under-fetching common\n- HTTP verbs define operations\n- Simpler caching\n\n**GraphQL:**\n- Single endpoint\n- Client specifies exact data needs\n- Prevents over/under-fetching\n- Query language for APIs\n- More complex caching\n\nChoose REST for simpler APIs, GraphQL for complex data requirements."
+          }
+        ],
+        "create_time": "2023-07-02T14:00:45.000Z"
+      }
+    ]
+  }
+]
