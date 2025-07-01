@@ -1,0 +1,56 @@
+# Rust
+target/
+Cargo.lock
+**/*.rs.bk
+*.pdb
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+
+# Python cache (for PyO3 bridge)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Config files with secrets
+config.toml
+llm-archive.toml
+
+# Backup files
+*.backup
+*.bak
+
+# Export data (don't commit user data)
+exports/
+data/
+*.json
+
+# Logs
+*.log
+
+# Test data
+test-data/
+golden-tests/
+
+# Coverage
+*.profraw
+*.profdata
+coverage/
+
+# Local environment
+.env
+.env.local

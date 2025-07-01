@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Search: {{ query }} - LLM Archive{% endblock %}
+
+{% block styles %}
+<style>
+    .search-header {
+        margin-bottom: 30px;
+    }
+    
+    .results-count {
+        color: var(--secondary-color);
+        margin: 20px 0;
+    }
+    
+    .results-list {
+        list-style: none;
+    }
+    
+    .result-item {
+        background: white;
+        padding: 20px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+    }
+    
+    .result-item:hover {
+        box-shadow: var(--shadow-hover);
+        transform: translateY(-1px);
+    }
+    
+    .result-item.selected {
+        border: 2px solid var(--primary-color);
+        padding: 18px;
+    }
+    
+    .result-item a {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+    
+    .result-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 8px;
+    }
+    
+    .result-meta {
+        color: var(--secondary-color);
+        font-size: 0.875rem;
+        margin-bottom: 12px;
+    }
+    
+    .result-snippet {
+        color: #555;
+        line-height: 1.5;
+    }
+    
+    .result-snippet mark {
+        background: #ffeb3b;
+        padding: 2px 4px;
+        border-radius: 2px;
+    }
+    
+    .no-results {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--secondary-color);
+    }
+    
+    .no-results h2 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<header class="search-header">
+    <h1><a href="/">LLM Archive</a></h1>
+    <form action="/search" method="get">
+        <input type="text" 
+               name="q" 
+               value="{{ query }}" 
+               class="search-box" 
+               placeholder="Search conversations..."
+               autocomplete="off"
+               autofocus>
+    </form>
+</header>
+
+{% if results %}
+    <p class="results-count">Found {{ results|length }} result{% if results|length != 1 %}s{% endif %} for "{{ query }}"</p>
+    
+    <ul class="results-list">
+        {% for result in results %}
+        <li class="result-item" data-index="{{ loop.index0 }}">
+            <a href="/conversation/{{ result.conversation.id }}">
+                <div class="result-title">
+                    {{ result.conversation.title|default("Untitled", true) }}
+                </div>
+                <div class="result-meta">
+                    {{ result.conversation.provider }} • 
+                    {{ result.conversation.model|default("unknown", true) }} • 
+                    {{ result.conversation.created_at.format("%Y-%m-%d") }}
+                </div>
+                <div class="result-snippet">
+                    {{ result.snippet|safe }}
+                </div>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <div class="no-results">
+        <h2>No results found</h2>
+        <p>Try searching with different keywords</p>
+    </div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let selectedIndex = -1;
+    const results = document.querySelectorAll('.result-item');
+    
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectResult(Math.min(selectedIndex + 1, results.length - 1));
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectResult(Math.max(selectedIndex - 1, -1));
+        } else if (e.key === 'Enter' && selectedIndex >= 0) {
+            e.preventDefault();
+            const link = results[selectedIndex].querySelector('a');
+            if (link) window.location.href = link.href;
+        }
+    });
+    
+    function selectResult(index) {
+        // Remove previous selection
+        if (selectedIndex >= 0) {
+            results[selectedIndex].classList.remove('selected');
+        }
+        
+        // Update selection
+        selectedIndex = index;
+        
+        // Add new selection
+        if (selectedIndex >= 0) {
+            results[selectedIndex].classList.add('selected');
+            results[selectedIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+    }
+    
+    // Click to select
+    results.forEach((result, index) => {
+        result.addEventListener('click', (e) => {
+            if (e.target.tagName !== 'A') {
+                e.preventDefault();
+                selectResult(index);
+            }
+        });
+    });
+</script>
+{% endblock %}

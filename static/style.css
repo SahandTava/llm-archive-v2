@@ -1,0 +1,107 @@
+/* LLM Archive V2 - Additional Styles */
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-color: #1a1a1a;
+        --text-color: #e0e0e0;
+        --card-bg: #2a2a2a;
+        --border-color: #444;
+        --primary-color: #4da3ff;
+        --secondary-color: #999;
+        --success-color: #5cb85c;
+        --danger-color: #d9534f;
+        --shadow: 0 2px 4px rgba(0,0,0,0.3);
+        --shadow-hover: 0 4px 8px rgba(0,0,0,0.4);
+    }
+    
+    .keyboard-shortcuts {
+        background: #2a2a2a;
+    }
+    
+    .stat-card {
+        background: #2a2a2a;
+    }
+    
+    .search-box {
+        background: #2a2a2a;
+        color: #e0e0e0;
+    }
+    
+    .message-content code {
+        background: #333;
+    }
+    
+    .message-content pre {
+        background: #333;
+    }
+    
+    .conversation-info {
+        background: #2a2a2a;
+    }
+    
+    .message-model {
+        background: #333;
+    }
+}
+
+/* Animations */
+.result-item {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Loading indicator */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .conversation-meta span {
+        display: block;
+        margin-bottom: 5px;
+    }
+}
+
+/* Print styles */
+@media print {
+    .back-link,
+    .keyboard-shortcuts,
+    .search-box {
+        display: none;
+    }
+    
+    .message {
+        break-inside: avoid;
+    }
+}
